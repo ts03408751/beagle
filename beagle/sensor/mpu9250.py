@@ -8,11 +8,9 @@ __all__ = ['MPU']
 
 class MPU(object):
 
-    def __init__(self, address=MPU_DEFAULT_I2C_ADDR, bus_addr=IMU_BUS):
-        self._bus = smbus.SMBus(bus_addr)
-        self._addr = address
-        self._raw_accel = [0.0] * 3
-        self._accel = [0.0] * 3
+    def __init__(self, imu_bus=IMU_BUS, mpu_addr=MPU_DEFAULT_I2C_ADDR):
+        self._bus = smbus.SMBus(imu_bus)
+        self._addr = mpu_addr
 
         self.__reset_mpu()
         self.__check_who_am_i()
@@ -133,15 +131,28 @@ class MPU(object):
         raw = self._bus.read_i2c_block_data(self._addr, ACCEL_XOUT_H, 6)
 
         # Turn the MSB and LSB into a signed 16-bit value
-        self._raw_accel[0] = np.int16(np.uint16(raw[0] << 8) | raw[1])
-        self._raw_accel[1] = np.int16(np.uint16(raw[2] << 8) | raw[3])
-        self._raw_accel[2] = np.int16(np.uint16(raw[4] << 8) | raw[5])
+        ax_raw = np.int16(np.uint16(raw[0] << 8) | raw[1])
+        ay_raw = np.int16(np.uint16(raw[2] << 8) | raw[3])
+        az_raw = np.int16(np.uint16(raw[4] << 8) | raw[5])
 
         # Fill in real unit values and apply calibration
-        self._accel[0] = self._raw_accel[0] * self._accel_to_ms2 / 1.0
-        self._accel[1] = self._raw_accel[1] * self._accel_to_ms2 / 1.0
-        self._accel[2] = self._raw_accel[2] * self._accel_to_ms2 / 1.0
+        ax = ax_raw * self._accel_to_ms2 / 1.0
+        ay = ay_raw * self._accel_to_ms2 / 1.0
+        az = az_raw * self._accel_to_ms2 / 1.0
 
-    @property
-    def accel(self):
-        return self._accel
+        return {'ax': ax, 'ay': ay, 'az': az}
+
+    def mpu_read_gyro(self):
+        raw = self._bus.read_i2c_block_data(self._addr, GYRO_XOUT_H, 6)
+
+        # Turn the MSB and LSB into a signed 16-bit value
+        gx_raw = np.int16(np.uint16(raw[0] << 8) | raw[1])
+        gy_raw = np.int16(np.uint16(raw[2] << 8) | raw[3])
+        gz_raw = np.int16(np.uint16(raw[4] << 8) | raw[5])
+
+        # Fill in real unit values and apply calibration
+        gx = gx_raw * self._gyro_to_degs / 1.0
+        gy = gy_raw * self._gyro_to_degs / 1.0
+        gz = gz_raw * self._gyro_to_degs / 1.0
+
+        return {'gx': gx, 'gy': gy, 'gz': gz}
