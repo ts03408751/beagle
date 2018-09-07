@@ -63,7 +63,7 @@ class MPU(object):
     def __set_gyro_fsr(self, fsr):
         if fsr == GYRO_FSR_250DPS:
             c = GYRO_FSR_CFG_250 | FCHOICE_B_DLPF_EN
-            self._gyro_to_degs = 250.0/32768.0
+            self._gyro_to_degs = 250.0 / 32768.0
         elif fsr == GYRO_FSR_500DPS:
             c = GYRO_FSR_CFG_500 | FCHOICE_B_DLPF_EN
             self._gyro_to_degs = 500.0 / 32768.0
@@ -140,6 +140,11 @@ class MPU(object):
         ay = ay_raw * self._accel_to_ms2 / 1.0
         az = az_raw * self._accel_to_ms2 / 1.0
 
+        # Format number for necessary precision
+        ax = round(ax, 4)
+        ay = round(ay, 4)
+        az = round(az, 4)
+
         return {'ax': ax, 'ay': ay, 'az': az}
 
     def mpu_read_gyro(self):
@@ -154,5 +159,10 @@ class MPU(object):
         gx = gx_raw * self._gyro_to_degs / 1.0
         gy = gy_raw * self._gyro_to_degs / 1.0
         gz = gz_raw * self._gyro_to_degs / 1.0
+
+        # Format number for necessary precision
+        gx = round(gx, 4)
+        gy = round(gy, 4)
+        gz = round(gz, 4)
 
         return {'gx': gx, 'gy': gy, 'gz': gz}

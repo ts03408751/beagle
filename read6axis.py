@@ -1,23 +1,30 @@
 import beagle as bg
 import sys
 import time
+import csv
 
 
 def main():
     mpu = bg.MPU()
-    print('%6s, %6s, %6s, %6s, %6s, %6s' % ('ax', 'ay', 'az', 'gx', 'gy', 'gz'))
 
     try:
-        while True:
-            accel = mpu.mpu_read_accel()
-            gyro = mpu.mpu_read_gyro()
-            sys.stdout.write('\r')
-            sys.stdout.write('%6.1f, %6.1f, %6.1f, ' % (accel['ax'], accel['ay'], accel['az']))
-            sys.stdout.write('%6.1f, %6.1f, %6.1f, ' % (gyro['gx'], gyro['gy'], gyro['gz']))
-            sys.stdout.flush()
-            time.sleep(0.01)
-    except KeyboardInterrupt:
-        print('')
+        with open('output.csv', 'w') as f:
+            writer = csv.writer(f, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow(['imu_ax', 'imu_ay', 'imu_az', 'imu_gx', 'imu_gy', 'imu_gz'])
+            while True:
+                try:
+                    accel = mpu.mpu_read_accel()
+                    gyro = mpu.mpu_read_gyro()
+                    row = [accel['ax'], accel['ay'], accel['az']]
+                    row += [gyro['gx'], gyro['gy'], gyro['gz']]
+                    writer.writerow(row)
+
+                except KeyboardInterrupt:
+                    f.close()
+                    break
+
+    except IOError:
+        print('Building CSV failed.')
 
     return 0
 
