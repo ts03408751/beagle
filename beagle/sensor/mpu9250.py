@@ -266,3 +266,11 @@ class MPU(object):
                 mz = round(mz, 4)
 
         return {'mx': mx, 'my': my, 'mz': mz}
+
+    def mpu_read_temp(self):
+        raw = self._bus.read_i2c_block_data(self._addr, TEMP_OUT_H, 2)
+        temp_raw = np.uint16(np.int16(raw[0] << 8) | raw[1])
+        temp = 21.0 + temp_raw / TEMP_SENSITIVITY
+        temp = round(temp, 2)
+
+        return temp

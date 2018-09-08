@@ -15,17 +15,18 @@ def main():
     try:
         with open(st + '.csv', 'w') as f:
             writer = csv.writer(f)
-            writer.writerow(['timestamp',
+            writer.writerow(['timestamp', 'temp',
                              'imu_ax', 'imu_ay', 'imu_az',
                              'imu_gx', 'imu_gy', 'imu_gz',
                              'imu_mx', 'imu_my', 'imu_mz'])
             while True:
                 try:
                     ts = time.time()
+                    temp = mpu.mpu_read_temp()
                     accel = mpu.mpu_read_accel()
                     gyro = mpu.mpu_read_gyro()
                     mag = mpu.mpu_read_mag()
-                    row = [ts]
+                    row = [ts, temp]
                     row += [accel['ax'], accel['ay'], accel['az']]
                     row += [gyro['gx'], gyro['gy'], gyro['gz']]
                     row += [mag['mx'], mag['my'], mag['mz']]
