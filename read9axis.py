@@ -29,9 +29,14 @@ def main():
                     row += [accel['ax'], accel['ay'], accel['az']]
                     row += [gyro['gx'], gyro['gy'], gyro['gz']]
                     row += [mag['mx'], mag['my'], mag['mz']]
+                    sys.stdout.write('\r')
+                    sys.stdout.write(str(row))
+                    sys.stdout.flush()
+
                     writer.writerow(row)
 
                     time.sleep(0.005)
+
                 except KeyboardInterrupt:
                     f.close()
                     break

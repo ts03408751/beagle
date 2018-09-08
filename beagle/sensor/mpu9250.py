@@ -23,7 +23,7 @@ class MPU(object):
         self.__set_gyro_fsr(GYRO_FSR_2000DPS)
         self.__set_accel_dlpf(ACCEL_DLPF_184)
         self.__set_gyro_dlpf(GYRO_DLPF_184)
-        # self.__mpu_set_sample_rate(sample_rate)
+        self.__mpu_set_sample_rate(sample_rate)
         self.__init_magnetometer()
 
         time.sleep(0.1)
@@ -123,6 +123,7 @@ class MPU(object):
         else:
             return -1
 
+        c = int(np.uint8(c))
         self._bus.write_byte_data(self._addr, ACCEL_CONFIG, c)
         return 0
 
@@ -142,6 +143,7 @@ class MPU(object):
         else:
             return -1
 
+        c = int(np.uint8(c))
         self._bus.write_byte_data(self._addr, GYRO_CONFIG, c)
         return 0
 
@@ -166,6 +168,7 @@ class MPU(object):
         else:
             return -1
 
+        c = int(np.uint8(c))
         self._bus.write_byte_data(self._addr, ACCEL_CONFIG_2, c)
         return 0
 
@@ -190,6 +193,7 @@ class MPU(object):
         else:
             return -1
 
+        c = int(np.uint8(c))
         self._bus.write_byte_data(self._addr, CONFIG, c)
         return 0
 
@@ -217,9 +221,9 @@ class MPU(object):
         raw = self._bus.read_i2c_block_data(self._addr, GYRO_XOUT_H, 6)
 
         # Turn the MSB and LSB into a signed 16-bit value
-        gx_raw = np.int16(np.uint16(raw[0] << 8) | raw[1])
-        gy_raw = np.int16(np.uint16(raw[2] << 8) | raw[3])
-        gz_raw = np.int16(np.uint16(raw[4] << 8) | raw[5])
+        gx_raw = np.int16(np.int16(raw[0] << 8) | raw[1])
+        gy_raw = np.int16(np.int16(raw[2] << 8) | raw[3])
+        gz_raw = np.int16(np.int16(raw[4] << 8) | raw[5])
 
         # Fill in real unit values and apply calibration
         gx = gx_raw * self._gyro_to_degs / 1.0
@@ -234,20 +238,31 @@ class MPU(object):
         return {'gx': gx, 'gy': gy, 'gz': gz}
 
     def mpu_read_mag(self):
-        raw = self._bus.read_i2c_block_data(AK8963_ADDR, AK8963_XOUT_L, 6)
+        mx, my, mz = 0, 0, 0
+        st1 = self._bus.read_byte_data(AK8963_ADDR, AK8963_ST1)
+        if (st1 & MAG_DATA_READY) > 0:
+            raw = self._bus.read_i2c_block_data(AK8963_ADDR, AK8963_XOUT_L, 7)
 
-        # Turn the MSB and LSB into a signed 16-bit value
-        # Data stored as little Endian
-        mx_raw = np.int16(np.int16(raw[0] << 8) | raw[1])
-        my_raw = np.int16(np.int16(raw[2] << 8) | raw[3])
-        mz_raw = np.int16(np.int16(raw[4] << 8) | raw[5])
+            # check if the readings saturated such as because
+            # of a local field source, discard data if so
+            if (raw[6] & MAGNETOMETER_SATURATION) == 0:
+                # Turn the MSB and LSB into a signed 16-bit value
+                # Data stored as little Endian
+                mx_raw = np.int16(np.int16(raw[1] << 8) | raw[0])
+                my_raw = np.int16(np.int16(raw[3] << 8) | raw[2])
+                mz_raw = np.int16(np.int16(raw[5] << 8) | raw[4])
 
-        # multiply by the sensitivity adjustment and convert to units of uT micro
-        # Teslas. Also correct the coordinate system as someone in InvenSense
-        # thought it would be bright idea to have the magnetometer coordinate
-        # system aligned differently than the accelerometer and gyro.... -__-
-        mx = my_raw * self._mag_factory_adjust[1] * MAG_RAW_TO_uT
-        my = mx_raw * self._mag_factory_adjust[0] * MAG_RAW_TO_uT
-        mz = -mz_raw * self._mag_factory_adjust[2] * MAG_RAW_TO_uT
+                # multiply by the sensitivity adjustment and convert to units of uT micro
+                # Teslas. Also correct the coordinate system as someone in InvenSense
+                # thought it would be bright idea to have the magnetometer coordinate
+                # system aligned differently than the accelerometer and gyro.... -__-
+                mx = my_raw * self._mag_factory_adjust[1] * MAG_RAW_TO_uT
+                my = mx_raw * self._mag_factory_adjust[0] * MAG_RAW_TO_uT
+                mz = -mz_raw * self._mag_factory_adjust[2] * MAG_RAW_TO_uT
+
+                # Format number for necessary precision
+                mx = round(mx, 4)
+                my = round(my, 4)
+                mz = round(mz, 4)
 
         return {'mx': mx, 'my': my, 'mz': mz}
