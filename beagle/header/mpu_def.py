@@ -1,4 +1,3 @@
-
 IMU_BUS = 2
 
 # MPU9250 Default I2C slave address

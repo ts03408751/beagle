@@ -8,9 +8,9 @@ __all__ = ['MPU']
 
 class MPU(object):
 
-    def __init__(self, imu_bus=IMU_BUS, mpu_addr=MPU_DEFAULT_I2C_ADDR, sample_rate=200):
-        self._bus = smbus.SMBus(imu_bus)
-        self._addr = mpu_addr
+    def __init__(self, bus=IMU_BUS, addr=MPU_DEFAULT_I2C_ADDR, sample_rate=200):
+        self._bus = smbus.SMBus(bus)
+        self._addr = addr
         self._dmp_en = 1
         self._bypass_en = 0
         self._mag_factory_adjust = [0.0] * 3
