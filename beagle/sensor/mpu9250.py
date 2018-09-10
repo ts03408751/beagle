@@ -245,7 +245,7 @@ class MPU(object):
 
             # check if the readings saturated such as because
             # of a local field source, discard data if so
-            if (raw[6] & MAGNETOMETER_SATURATION) == 0:
+            if (raw[6] & MAGNETOMETER_SATURATION) != MAGNETOMETER_SATURATION:
                 # Turn the MSB and LSB into a signed 16-bit value
                 # Data stored as little Endian
                 mx_raw = np.int16(np.int16(raw[1] << 8) | raw[0])
